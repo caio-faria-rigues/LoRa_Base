@@ -6,10 +6,11 @@
 //IMPORTANTE!!! 
 #define DEBUG //Comente antes de conectar ao Supervisório
 
+#include <main.h>
 JsonDocument doc;
 
 //trocar para a versão disponível do LoRa (SX272, SX273, SX276, SX277, SX278, SX279)
-SX1278 lora = new LoRa;
+SX1272 lora = new LoRa;
 
 int32_t lora_time;
 uint32_t lora_status;
@@ -36,7 +37,18 @@ float loraRSSI;
 void setup() {
   Serial.begin(115200);
 
-  int state = lora.begin();
+  int state = lora.begin(
+    LORA_FREQ,
+    LORA_BW,
+    LORA_SF,
+    LORA_CR,
+    LORA_SYNCWORD,
+    LORA_POWER,
+    LORA_CURRENTLIMIT,
+    LORA_PL,
+    LORA_GAIN
+  );
+
 #ifdef DEBUG
   if (state == ERR_NONE) {
     Serial.println(F("LoRa iniciado com sucesso!"));
@@ -57,6 +69,9 @@ void loop() {
 #ifdef DEBUG
   if (state == ERR_NONE) {
     Serial.println(F("Mensagem Recebida!"));
+  } else {
+    Serial.println("Erro ao receber a mensagem: ");
+    Serial.println(state);
   }
 #endif
 
