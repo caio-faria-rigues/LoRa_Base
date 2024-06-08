@@ -10,7 +10,8 @@
 JsonDocument doc;
 
 //trocar para a versão disponível do LoRa (SX272, SX273, SX276, SX277, SX278, SX279)
-SX1272 lora = new LoRa;
+//o último parâmetro de LoRa() é uma instância de SPI, use se precisar
+SX1272 lora = new LoRa(CS_PIN, DIO0_PIN, DIO1_PIN);
 
 int32_t lora_time;
 uint32_t lora_status;

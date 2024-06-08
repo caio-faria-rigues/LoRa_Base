@@ -8,3 +8,7 @@
 #define LORA_POWER 20
 #define LORA_CURRENTLIMIT 100u
 #define LORA_GAIN 0u
+
+#define CS_PIN 4
+#define DIO0_PIN 2
+#define DIO1_PIN 3
