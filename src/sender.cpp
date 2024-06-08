@@ -2,59 +2,24 @@
 #include <ArduinoJson.h>
 #include<LoRaLib.h>
 //https://github.com/jgromes/LoRaLib/blob/master/examples/Receive/Receive.ino
+#include <LoRa_E220.h>
 
+#include <main.h>
 //IMPORTANTE!!! 
 #define DEBUG //Comente antes de conectar ao Supervisório
 
-#include <main.h>
+HardwareSerial Serial2;
 
-//trocar para a versão disponível do LoRa (SX272, SX273, SX276, SX277, SX278, SX279)
-//o último parâmetro de LoRa() é uma instância de SPI, use se precisar
-SX1272 lora = new LoRa(CS_PIN, DIO0_PIN, DIO1_PIN);
+//LoRa_E220 e220ttl(&Serial2, 22, 4, 18, 21, 19, UART_BPS_RATE_115200); //  esp32 RX <-- e220 TX, esp32 TX --> e220 RX AUX M0 M1
+LoRa_E220 e220ttl(&Serial2, 15, 21, 19); //  RX AUX M0 M1
+#define DESTINATION_ADDL 2
 
-// Data structure to store sensor data
-typedef struct // size = 64 bytes
-{
-    int32_t time;
-    uint32_t status;
-
-    float pressure;
-    float temperature;
-    float bmp_altitude;
-    float max_altitude;
-
-    float AcelX;
-    float AcelY;
-    float AcelZ;
-
-    float GyroX;
-    float GyroY;
-    float GyroZ;
-
-    float latitude;
-    float longitude;
-    float gps_altitude;
-    float hor_speed;
-} data_t;
-
-size_t len = 64;
-byte loraByteArray[64];
 data_t SensorData;
 
 void setup() {
   Serial.begin(115200);
 
-  int state = lora.begin(
-    LORA_FREQ,
-    LORA_BW,
-    LORA_SF,
-    LORA_CR,
-    LORA_SYNCWORD,
-    LORA_POWER,
-    LORA_CURRENTLIMIT,
-    LORA_PL,
-    LORA_GAIN
-  );
+  e220ttl.begin();
 
   SensorData.time = 123456;
   SensorData.temperature = 50.0;
@@ -73,42 +38,14 @@ void setup() {
   SensorData.bmp_altitude = 3500.5;
   SensorData.gps_altitude = 3505.5;
 
+  //envia mensagem
+	ResponseStatus rs = e220ttl.sendFixedMessage(0, DESTINATION_ADDL, 23, &SensorData, sizeof(data_t));
+
 #ifdef DEBUG
-  if (state == ERR_NONE) {
-    Serial.println(F("LoRa iniciado com sucesso!"));
-  } else {
-    Serial.print(F("ERRO: "));
-    Serial.println(state);
-    while (true);
-  }
+	Serial.println(rs.getResponseDescription());
 #endif
 }
 
 void loop() {
-    Serial.print(F("Enviando pacote ..."));
-
-    //copia os bytes do struct em uma byteArray
-    memcpy(loraByteArray, &SensorData, sizeof(SensorData));
-
-    int state = lora.transmit(loraByteArray, 64);
-
-#ifdef DEBUG:
-    if (state == ERR_NONE) {
-        Serial.println(F("Pacote enviado com sucesso!\n"));
-        
-        for (int i=0;i<len;i++) Serial.print(loraByteArray[i]);
-
-        Serial.print(F("\nDatarate:\t"));
-        Serial.print(lora.getDataRate());
-        Serial.println(F(" bps"));
-
-    } else if (state == ERR_PACKET_TOO_LONG) {
-    Serial.println(F("ERRO: pacote maior que 256 bytes!"));
-
-    } else if (state == ERR_TX_TIMEOUT) {
-    Serial.println(F("ERRO: timeout!"));
-    }
-#endif
-
   delay(1000);
 }
